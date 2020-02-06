@@ -12,7 +12,7 @@ _Course [dd2380](https://kth.instructure.com/courses/17076) at KTH 2020._
     ```diff
     - DEADLINE Feb 21, 23:59 sharp
     ```
-    <span style="color:orange;">Word up</span>
-    
+
+
 - __A3 - (?):__ 
 
