@@ -1,4 +1,4 @@
-#HMM2 Estimate Sequence of States
+# HMM2 Estimate Sequence of States
 In this task you should show that you know how to calculate the most likely sequence of (hidden) states that the system moves through given an emission sequence and an HMM model.
 
 - Input
