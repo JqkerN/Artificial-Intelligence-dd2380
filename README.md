@@ -1,12 +1,10 @@
 # Artificial-Intelligence-dd2380
-__Course dd2380 at KTH 2020.__
-- [X] A1 - games
+_Course dd2380 at KTH 2020._
+__A1 - games:__ - [X]
     - [X] TicTacToe
     - [X] TicTacToe 3D
     - [X] Checkers
-- [ ] A2 - Duckhunt & HMM
+__A2 - Duckhunt & HMM:__ - [ ] 
     - [ ] E-C tasks
     - [ ] B-A tasks
-- [x] Finish my changes
-- [ ] Push my commits to GitHub
-- [ ] Open a pull request
+
