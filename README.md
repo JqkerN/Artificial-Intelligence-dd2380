@@ -9,9 +9,9 @@ _Course [dd2380](https://kth.instructure.com/courses/17076) at KTH 2020._
 - __A2 - Duckhunt & HMM:__ [_Instructions_](https://github.com/JqkerN/Artificial-Intelligence-dd2380/blob/master/A2_duckhunt_hmm/A2_DD2380_2020.pdf)
     - [ ] E-C tasks
     - [ ] B-A tasks 
-    ```diff
-    - DEADLINE Feb 21, 23:59 sharp
-    ```
+```diff
+- DEADLINE Feb 21, 23:59 sharp
+```
 
 
 - __A3 - (?):__ 
