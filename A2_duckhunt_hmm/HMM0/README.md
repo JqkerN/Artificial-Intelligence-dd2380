@@ -14,10 +14,10 @@ More specifically, given the current state probability distribution what is the 
   prob.[1x3]: 0.3 0.6 0.1
 
 To compile:
-´´´
-g++ main.cpp -o main
-´´´
+```
+$ g++ main.cpp -o main
+```
 To compare with example:
-´´´ 
-./main.exe < sample_00.in
-´´´
+```
+$ ./main.exe < sample_00.in
+```
