@@ -12,3 +12,12 @@ More specifically, given the current state probability distribution what is the 
 - Output
   - You should output the emission probability distribution on a single line in the same matrix format, including the dimensions.</br>
   prob.[1x3]: 0.3 0.6 0.1
+
+To compile:
+'''
+g++ main.cpp -o main
+'''
+To compare with example:
+''' 
+./main.exe < sample_00.in
+'''
