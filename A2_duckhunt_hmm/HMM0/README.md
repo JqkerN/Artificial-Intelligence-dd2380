@@ -5,7 +5,10 @@ More specifically, given the current state probability distribution what is the 
 
 - Input
   - You will be given three matrices (in this order); transition matrix, emission matrix, and initial state probability distribution. The initial state probability distribution is a row vector encoded as a matrix with only one row. Each matrix is given on a separate line with the number of rows and columns followed by the matrix elements (ordered row by row). Note that the rows and column size can be different from the sample input.
+  A[4x4]: 0.2 0.5 0.3 0.0 0.1 0.4 0.4 0.1 0.2 0.0 0.4 0.4 0.2 0.3 0.0 0.5
+  B[4x3]: 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 0.2 0.6 0.2
+  pi[1x4]: 0.0 0.0 0.0 1.0
 
 - Output
   - You should output the emission probability distribution on a single line in the same matrix format, including the dimensions.
-
+  prob.[1x3]: 0.3 0.6 0.1

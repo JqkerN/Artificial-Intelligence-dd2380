@@ -1,7 +1,7 @@
 # C++ skeleton for duck hunt dd2380
 
 # Compile
-g++ -std=c++11 *pp
+g++ -std=c++11 *pp -o Skeleton
 
 # Run
 # The agent can be run in two different modes:

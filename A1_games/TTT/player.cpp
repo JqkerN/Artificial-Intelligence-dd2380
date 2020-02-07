@@ -300,7 +300,7 @@ GameState Player::play(const GameState &pState,const Deadline &pDue)
     GameState bestState;
     int alpha = std::numeric_limits<int>::min();
     int beta = std::numeric_limits<int>::max();
-    int depth = 4;
+    int depth = 2;
     int current_MAX = std::numeric_limits<int>::min();
     int current_MIN = std::numeric_limits<int>::max();
     int v = 0;
