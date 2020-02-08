@@ -50,9 +50,9 @@ string vector2string(vector<float> vector_float){
 
 
 int main(){
-    string A_string;
-    string B_string;
-    string pi_string;
+    string A_string;    // Transition Matrix
+    string B_string;    // Emission Matrix
+    string pi_string;   // Initial state probability distribution
 
     getline(cin, A_string);
     getline(cin, B_string);
@@ -62,8 +62,8 @@ int main(){
     vector<float> B = string2vector(B_string);
     vector<float> pi = string2vector(pi_string);
     vector<float> pi_times_A = matrixMultiplication(pi, A);
-    vector<float> new_state = matrixMultiplication(pi_times_A, B);
-    string output = vector2string(new_state);
+    vector<float> new_prob_dist = matrixMultiplication(pi_times_A, B);
+    string output = vector2string(new_prob_dist);
     cout << output << endl;
     return 0;
 }

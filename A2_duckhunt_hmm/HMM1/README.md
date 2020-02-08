@@ -6,3 +6,12 @@ In this task you should show that you know how to calculate the probability to o
 
 - Output
   - You should output the probability of the given sequence as a single scalar.
+
+To compile:
+```
+$ g++ main.cpp -o main
+```
+To compare with example:
+```
+$ ./main.exe < hmm2_01.in
+```
