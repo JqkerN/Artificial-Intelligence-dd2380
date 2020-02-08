@@ -3,152 +3,190 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include "printVector.hpp"
 
 using namespace std;
 
-vector<float> string2vector(string list_string){
-    vector<float> value;
-    istringstream iss(list_string);
-    string value_string;
-    while(iss >> value_string) {
-        value.push_back(stof(value_string));
-    }
-    return value;
-}
+class matrix{
+    public:
+    string name;
+    string input;
+    int rows;
+    int cols;
+    vector<float> vec;
+    vector<vector<float>> mat;
 
-string vector2string(vector<float> vector_float){
-    string value;
-    for (int idx = 0; idx < vector_float.size(); idx++){
-        value += to_string(vector_float[idx]) +  " ";
-    }
-    return value;
-}
+    void string2vector();
+    void getMatrix();
+    void printMatrix();
+    void initilizeMatrix(bool verbose, bool empty);
+    void printSequence();
+    void emptyMatrix();
+};
 
-vector<float> matrixMultiplication(vector<float> A, vector<float> B){
-    if (A[1] != B[0]) {
-        fprintf(stderr, "ERROR: Matrix missmatch, Matrix1[%.0f x %.0f] x Matrix2[%.0f x %.0f].\n", A[0],A[1],B[0],B[1]);
+void matrix::initilizeMatrix(bool verbose = false, bool empty = false){
+    if (name.empty() || (input.empty() && empty == false) ){
+        fprintf(stderr, "Fill in name and input properly. name empty: %i input: %i", name.empty(), input.empty());
         exit(1);
     }
-    vector<float> result;
-    float tmp = 0;
-    result.push_back(A[0]); // Adds number of rows
-    result.push_back(B[1]); // Adds number of cols
-    for (int A_rows = 0; A_rows < A[0]; A_rows++) {
-        for (int B_cols = 0; B_cols < B[1]; B_cols++) {
-            for (int idx = 0; idx < A[1]; idx++) {
-                int A_idx = 2 + idx + A_rows * A[0];
-                int B_idx = 2 + B_cols + idx * B[1];
-                tmp += A[A_idx] * B[B_idx];
+    if (empty == true){
+        emptyMatrix();
+        if (verbose){
+            printMatrix();
+        }
+    }else{
+        string2vector();
+        getMatrix();
+        if (verbose){
+            printMatrix();
+        }
+    }
+
+}
+
+void matrix::string2vector(){
+    istringstream iss(input);
+    string tmp;
+    while(iss >> tmp) {
+        vec.push_back(stof(tmp));
+    }
+}
+
+void matrix::getMatrix(){
+    rows = vec[0];
+    cols = vec[1];
+    for (int r = 0; r < vec[0]; r++) {
+        vector<float> tmp;
+        for (int c = 0; c < vec[1]; c++) {
+            int idx = 2 + c + r * vec[0];
+            tmp.push_back( vec[idx]);
+        }
+        mat.push_back(tmp);  
+    }
+}
+
+void matrix::emptyMatrix(){
+    if (cols == 0 || rows == 0){
+        fprintf(stderr, "Fill in rows and cols properly. name rows: %i cols: %i", rows, cols);
+        exit(1);
+    }
+    for (int r = 0; r < rows; r++) {
+        vector<float> tmp;
+        for (int c = 0; c < cols; c++) {
+            tmp.push_back(0.0);
+        }
+        mat.push_back(tmp);  
+    }
+}
+
+void matrix::printMatrix() {
+    cout << "size of " << name <<": (" << rows << "," << cols << ")"<<endl;;
+    for (int r = 0; r < mat.size(); r++){
+        for (int c = 0; c < mat[0].size(); c++){
+            cout << mat[r][c] << '	';
+        }
+        cout << endl;
+    }
+}
+
+class sequence{
+    public:
+    string name;
+    string input;
+    int observations;
+    vector<float> vec;
+
+    void string2vector();
+    void printSequence();
+    void initilizeSequence(bool verbose);
+};
+
+void sequence::initilizeSequence(bool verbose = false){
+    if (name.empty() || input.empty()){
+        fprintf(stderr, "Fill in name and input properly. name empty: %i input: %i", name.empty(), input.empty());
+    }
+    string2vector();
+    if (verbose){
+        printSequence();
+    }
+    
+
+}
+
+void sequence::string2vector(){
+    istringstream iss(input);
+    string tmp;
+    string tmp_2;
+    iss >> tmp_2;
+    observations = stoi(tmp_2);
+    while(iss >> tmp) {
+        vec.push_back(stof(tmp));
+    }
+}
+
+void sequence::printSequence() {
+    cout << "size of " << name <<": (" << observations << ")" <<endl;;
+    for (int idx = 0; idx < observations; idx++){
+        cout << vec[idx] << '	';
+    }
+    cout << endl;
+}
+
+double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+
+    matrix forward;
+    double forwardprob = 0;
+    forward.name = "Forward Matrix";
+    forward.rows = N;
+    forward.cols = T;
+    forward.initilizeMatrix(false, true);
+
+    // Initialization step
+    for (int s = 0; s < N; s++) {
+        forward.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
+    }
+
+    // Recursion step
+    for (int t = 0; t < T-1; t++) {
+        for (int s = 0; s < N; s++) {
+            float tmp = 0;
+            for (int sp = 0; sp < N; sp++) {
+                tmp +=  forward.mat[sp][t] * A.mat[sp][s]; 
             }
-            result.push_back(tmp);
-            tmp = 0;   
-        }
+            forward.mat[s][t+1] = tmp * B.mat[s][O.vec[t+1]]; 
+        }   
     }
-    return result;
+    // forward.printMatrix();
+    // Termination step
+    for (int s = 0; s < N; s++) {
+                forwardprob +=  forward.mat[s][T-1]; 
+            }
+    return forwardprob;
 }
-
-vector<float> matrixScalarMultiplication(vector<float> A, int scalar){
-    vector<float> result;
-    float tmp = 0;
-    result.push_back(A[0]); // Adds number of rows
-    result.push_back(A[1]); // Adds number of cols
-    for (int idx = 0; idx < A.size(); idx++) {
-        result.push_back(A[idx+2]*scalar);
-    }
-    return result;
-}
-
-vector<float> matrixAddition(vector<float> A, vector<float> B){
-    vector<float> result;
-    float tmp = 0;
-    result.push_back(A[0]); // Adds number of rows
-    result.push_back(A[1]); // Adds number of cols
-    for (int idx = 0; idx < A.size(); idx++) {
-        result.push_back(A[idx+2] + B[idx+2]);
-    }
-    return result;
-}
-
-vector<float> getColumn(vector<float> B, int column){
-    vector<float> result;
-    float tmp = 0;
-    result.push_back(B[0]); // Adds number of rows
-    result.push_back(1); // Adds number of cols
-    for (int idx = 0; idx < B[0]; idx++) {
-        int elm = idx*B[0] + column + 2;
-        result.push_back(B[elm]);
-    }
-    return result;
-}
-
-float alpha_pass(vector<float> A, vector<float> B, vector<float> pi, vector<float> seq){
-    vector<float> alpha_values;
-
-    int last_state = seq[1];
-    int next_state = seq[1];
-    float a;
-    float b;
-    float alpha_sum;
-    vector<float> alpha;
-    alpha.push_back(pi[2 + last_state + next_state] * B[2 + last_state*B[0] + next_state]);
-
-    /**
-     *  TODO: Change to sum over every possible state.. see lecture slide. 
-     *        It´s more complex then you want it to be, ie we have to sum over every possible state.
-     *        HAR DET SÅ JÄVLA ROLIGT! :D
-     */
-
-    for (int state_idx = 1; state_idx < seq[0]; state_idx++) {
-        last_state = seq[state_idx];
-        next_state = seq[state_idx + 1];
-        alpha_sum = 0;
-        for (int alpha_idx = 0; alpha_idx < alpha.size(); alpha_idx++ ) {
-            int idx = 2 + last_state*A[0] + next_state;
-            alpha_sum += alpha[alpha_idx] * A[idx];
-        }
-        int idx = 2 + last_state*B[0] + next_state;
-        cout << alpha_sum  << endl;
-        cout << "States: " << last_state << " "<< next_state << endl;
-        cout << "B value: " << B[idx] << endl;
-        cout << "alpha value: " << alpha_sum * B[idx] << endl;
-        
-        alpha.push_back(alpha_sum * B[idx]);
-    }
-
-    return alpha[alpha.size()-1];
-}
-
-
 
 int main(){
-    string A_string;    
-    string B_string;
-    string pi_string;
-    string sequence_string;
+    matrix A;   // Transition Matrix 
+    matrix B;   // Emission Matrix
+    matrix pi;  // Inital State Probability Distribution
+    sequence O;   // Sequence of Emissions
 
-    getline(cin, A_string);     // Transition Matrix
-    getline(cin, B_string);     // Emission Matrix
-    getline(cin, pi_string);    // Inital State Probability Distribution
-    getline(cin, sequence_string);     // Sequence of Emissions
-    cout << A_string <<endl;
-    cout << B_string <<endl;
+    A.name = "Transition Matrix (A)";
+    B.name = "Emission Matrix (B)";
+    pi.name = "Inital State Probability Distribution (pi)";
+    O.name = "Sequence of Emissions (O)";
 
+    // Read input from terminal
+    getline(cin, A.input); 
+    getline(cin, B.input);
+    getline(cin, pi.input);
+    getline(cin, O.input);
 
-    vector<float> A = string2vector(A_string);
-    vector<float> B = string2vector(B_string);
-    vector<float> pi = string2vector(pi_string);
-    vector<float> sequence = string2vector(sequence_string);
-    cout<< "A: "<< endl;
-    print_float_vector(A);
-    cout<< "B: "<< endl;
-    print_float_vector(B);
-    // cout<< "Column of B: "<< endl;
-    // print_float_vector(getColumn(B,0));
-    cout<< "sequence: "<< endl;
-    print_sequence(sequence);
-    
-    float prob = alpha_pass(A, B, pi, sequence);
-    cout << "prob = " << prob << endl;
+    // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
+    A.initilizeMatrix(false);
+    B.initilizeMatrix(false);
+    pi.initilizeMatrix(false);
+    O.initilizeSequence(false);
+    double res = FORWARD(A, B, pi, O, A.rows, O.observations);
+    cout << res << endl;
+
     return 0;
 }
