@@ -135,6 +135,7 @@ double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
     matrix forward;
     double forwardprob = 0;
+    double tmp;
     forward.name = "Forward Matrix";
     forward.rows = N;
     forward.cols = T;
@@ -148,7 +149,7 @@ double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
     // Recursion step
     for (int t = 0; t < T-1; t++) {
         for (int s = 0; s < N; s++) {
-            float tmp = 0;
+            tmp = 0;
             for (int sp = 0; sp < N; sp++) {
                 tmp +=  forward.mat[sp][t] * A.mat[sp][s]; 
             }
