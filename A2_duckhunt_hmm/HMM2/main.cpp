@@ -14,8 +14,8 @@ class matrix{
     string input;
     int rows;
     int cols;
-    vector<float> vec;
-    vector<vector<float>> mat;
+    vector<double> vec;
+    vector<vector<double>> mat;
 
     void string2vector();
     void getMatrix();
@@ -49,7 +49,7 @@ void matrix::string2vector(){
     istringstream iss(input);
     string tmp;
     while(iss >> tmp) {
-        vec.push_back(stof(tmp));
+        vec.push_back(stod(tmp));
     }
 }
 
@@ -57,7 +57,7 @@ void matrix::getMatrix(){
     rows = vec[0];
     cols = vec[1];
     for (int r = 0; r < vec[0]; r++) {
-        vector<float> tmp;
+        vector<double> tmp;
         for (int c = 0; c < vec[1]; c++) {
             int idx = 2 + c + r * vec[0];
             tmp.push_back( vec[idx]);
@@ -72,7 +72,7 @@ void matrix::emptyMatrix(){
         exit(1);
     }
     for (int r = 0; r < rows; r++) {
-        vector<float> tmp;
+        vector<double> tmp;
         for (int c = 0; c < cols; c++) {
             tmp.push_back(0.0);
         }
@@ -95,7 +95,7 @@ class sequence{
     string name;
     string input;
     int observations;
-    vector<float> vec;
+    vector<double> vec;
 
     void string2vector();
     void printSequence();
@@ -194,7 +194,7 @@ vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
     // Recursion step
     for (int t = 1; t < T; t++) {
         for (int i = 0; i < N; i++) {
-            vector<float> delta_tmp;
+            vector<double> delta_tmp;
             for (int j = 0; j < N; j++) {
                 delta_tmp.push_back( A.mat[j][i] * delta.mat[j][t-1] * B.mat[i][O.vec[t]] );
             }
@@ -208,7 +208,7 @@ vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
     // Termination step
     int bestPathPointer = 0; 
-    float bestValue = 0; 
+    double bestValue = 0; 
     for (int s = 0; s < N; s++) {
         if (delta.mat[s][T-1] > bestValue) {
             bestPathPointer = s;
