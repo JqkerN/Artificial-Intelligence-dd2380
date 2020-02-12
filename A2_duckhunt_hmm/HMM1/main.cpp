@@ -12,8 +12,8 @@ class matrix{
     string input;
     int rows;
     int cols;
-    vector<float> vec;
-    vector<vector<float>> mat;
+    vector<double> vec;
+    vector<vector<double>> mat;
 
     void string2vector();
     void getMatrix();
@@ -47,7 +47,7 @@ void matrix::string2vector(){
     istringstream iss(input);
     string tmp;
     while(iss >> tmp) {
-        vec.push_back(stof(tmp));
+        vec.push_back(stod(tmp));
     }
 }
 
@@ -55,7 +55,7 @@ void matrix::getMatrix(){
     rows = vec[0];
     cols = vec[1];
     for (int r = 0; r < vec[0]; r++) {
-        vector<float> tmp;
+        vector<double> tmp;
         for (int c = 0; c < vec[1]; c++) {
             int idx = 2 + c + r * vec[0];
             tmp.push_back( vec[idx]);
@@ -70,7 +70,7 @@ void matrix::emptyMatrix(){
         exit(1);
     }
     for (int r = 0; r < rows; r++) {
-        vector<float> tmp;
+        vector<double> tmp;
         for (int c = 0; c < cols; c++) {
             tmp.push_back(0.0);
         }
@@ -93,7 +93,7 @@ class sequence{
     string name;
     string input;
     int observations;
-    vector<float> vec;
+    vector<double> vec;
 
     void string2vector();
     void printSequence();
@@ -133,35 +133,35 @@ void sequence::printSequence() {
 
 double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
-    matrix forward;
-    double forwardprob = 0;
+    matrix alpha;
+    double alpha_prob = 0;
     double tmp;
-    forward.name = "Forward Matrix";
-    forward.rows = N;
-    forward.cols = T;
-    forward.initilizeMatrix(false, true);
+    alpha.name = "alpha Matrix";
+    alpha.rows = N;
+    alpha.cols = T;
+    alpha.initilizeMatrix(false, true);
 
     // Initialization step
     for (int s = 0; s < N; s++) {
-        forward.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
+        alpha.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
     }
 
     // Recursion step
-    for (int t = 0; t < T-1; t++) {
-        for (int s = 0; s < N; s++) {
+    for (int t = 1; t < T; t++) {
+        for (int i = 0; i < N; i++) {
             tmp = 0;
-            for (int sp = 0; sp < N; sp++) {
-                tmp +=  forward.mat[sp][t] * A.mat[sp][s]; 
+            for (int j = 0; j < N; j++) {
+                tmp +=  alpha.mat[j][t-1] * A.mat[j][i]; 
             }
-            forward.mat[s][t+1] = tmp * B.mat[s][O.vec[t+1]]; 
+            alpha.mat[i][t] = tmp * B.mat[i][O.vec[t]]; 
         }   
     }
-    // forward.printMatrix();
+    // alpha.printMatrix();
     // Termination step
     for (int s = 0; s < N; s++) {
-                forwardprob +=  forward.mat[s][T-1]; 
+                alpha_prob +=  alpha.mat[s][T-1]; 
             }
-    return forwardprob;
+    return alpha_prob;
 }
 
 int main(){
