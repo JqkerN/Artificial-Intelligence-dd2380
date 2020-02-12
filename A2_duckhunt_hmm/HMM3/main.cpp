@@ -224,11 +224,37 @@ vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
     return viterbi_sequence;
 }
 
-struct baum_welch_output
+struct baum_welch_estimate
 {
-    vector<vector<double>> A;
-    vector<vector<double>> B;
+    matrix A;
+    matrix B;
 };
+
+baum_welch_estimate baum_welch(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+    /**
+     * __Psudocode__
+     * INITILIZE: A and B.
+     * ITERATE: -> to convergence.
+     * E:
+     *      Calculate Gamma(alpha, beta)
+     *      Caluclate Zeta(alpha, beta, B, A) 
+     * M:
+     *      Calculate A(zeta)
+     *      Caluclate B(Gamma)
+     * RETURN: A, B
+    */
+
+    matrix A_out;
+    matrix B_out;
+    
+    A_out.name = "Transition Matrix OUT (A_out)";
+    B_out.name = "Emission Matrix OUT (B_out)";
+    A_out.rows = A.rows; A_out.cols = A.cols; A_out.initilizeMatrix(true, true);
+    B_out.rows = B.rows; B_out.cols = B.cols; B_out.initilizeMatrix(true, true);
+    
+
+    return {A_out, B_out};
+}
 
 
 
@@ -255,9 +281,10 @@ int main(){
     B.initilizeMatrix(false);
     pi.initilizeMatrix(false);
     O.initilizeSequence(false);
-    vector<int> viterbi_sequence = viterbi(A, B, pi, O, A.rows, O.observations);
-    string output = vector2string(viterbi_sequence);
-    cout << output << endl;
+    baum_welch_estimate tmp = baum_welch(A, B, pi, O, A.rows, O.observations);
+    tmp.B.printMatrix();
+    tmp.A.printMatrix();
+
 
     return 0;
 }
