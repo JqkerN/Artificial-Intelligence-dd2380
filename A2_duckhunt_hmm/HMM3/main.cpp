@@ -3,6 +3,8 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
+
 
 using namespace std;
 
@@ -131,42 +133,105 @@ void sequence::printSequence() {
     cout << endl;
 }
 
+string vector2string(vector<int> vector_float){
+    string value;
+    for (int idx = 0; idx < vector_float.size(); idx++){
+        value += to_string(vector_float[idx]) +  " ";
+    }
+    return value;
+}
+
 double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
-    matrix alpha;
-    double alpha_prob = 0;
-    double tmp = 0;
-    alpha.name = "alpha Matrix";
-    alpha.rows = N;
-    alpha.cols = T;
-    alpha.initilizeMatrix(false, true);
-    // alpha.printMatrix();
+    matrix forward;
+    double forwardprob = 0;
+    double tmp;
+    forward.name = "Forward Matrix";
+    forward.rows = N;
+    forward.cols = T;
+    forward.initilizeMatrix(false, true);
+
     // Initialization step
     for (int s = 0; s < N; s++) {
-        alpha.mat[s][0] = ( pi.mat[0][s] * B.mat[s][int(O.vec[0])]);
+        forward.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
     }
-    // B.printMatrix();
+
     // Recursion step
-    for (int t = 1; t < T; t++) {
-        // cout << "t" << t << endl;
-        for (int i = 0; i < N; i++) {
-            
-            for (int j = 0; j < N; j++) {
-                tmp +=  alpha.mat[j][t-1] * A.mat[j][i]; 
-                // cout << "A = "<<A.mat[j][i] << endl;
-            }
-            // cout << "B " << B.mat[i][int(O.vec[t])] << endl;
-            alpha.mat[i][t] = tmp * B.mat[i][int(O.vec[t])]; 
+    for (int t = 0; t < T-1; t++) {
+        for (int s = 0; s < N; s++) {
             tmp = 0;
+            for (int sp = 0; sp < N; sp++) {
+                tmp +=  forward.mat[sp][t] * A.mat[sp][s]; 
+            }
+            forward.mat[s][t+1] = tmp * B.mat[s][O.vec[t+1]]; 
         }   
     }
-    // alpha.printMatrix();
+    forward.printMatrix();
     // Termination step
     for (int s = 0; s < N; s++) {
-                alpha_prob +=  alpha.mat[s][T-1]; 
+                forwardprob +=  forward.mat[s][T-1]; 
             }
-    return alpha_prob;
+    return forwardprob;
 }
+
+vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+    vector<int> viterbi_sequence(T, 0);
+
+    matrix delta;
+    matrix delta_idx;
+    delta.name = "delta matrix";
+    delta_idx.name = "delta matrix INDEX";
+    delta.rows = N; delta.cols = T;
+    delta_idx.rows = N; delta_idx.cols = T;
+    delta.initilizeMatrix(false, true);
+    delta_idx.initilizeMatrix(false, true);
+
+    // Initialization step
+    for (int s = 0; s < N; s++) {
+        delta.mat[s][0] = pi.mat[0][s] * B.mat[s][O.vec[0]];
+    } 
+
+    // Recursion step
+    for (int t = 1; t < T; t++) {
+        for (int i = 0; i < N; i++) {
+            vector<double> delta_tmp;
+            for (int j = 0; j < N; j++) {
+                delta_tmp.push_back( A.mat[j][i] * delta.mat[j][t-1] * B.mat[i][O.vec[t]] );
+            }
+     
+            delta.mat[i][t] = *max_element(delta_tmp.begin(), delta_tmp.end());
+            delta_idx.mat[i][t] = max_element(delta_tmp.begin(), delta_tmp.end()) - delta_tmp.begin();
+            
+        } 
+     
+    }
+    delta.printMatrix();
+    delta_idx.printMatrix();
+    // Termination step
+    int bestPathPointer = 0; 
+    double bestValue = 0; 
+    for (int s = 0; s < N; s++) {
+        if (delta.mat[s][T-1] > bestValue) {
+            bestPathPointer = s;
+            bestValue = delta.mat[s][T-1];
+        }
+    }
+    for (int t = T-1; t >= 0; t--) {
+            viterbi_sequence[t] = bestPathPointer;
+            bestPathPointer = delta_idx.mat[bestPathPointer][t];
+            }
+
+    return viterbi_sequence;
+}
+
+struct baum_welch_output
+{
+    vector<vector<double>> A;
+    vector<vector<double>> B;
+};
+
+
+
 
 int main(){
     matrix A;   // Transition Matrix 
@@ -184,15 +249,15 @@ int main(){
     getline(cin, B.input);
     getline(cin, pi.input);
     getline(cin, O.input);
-    
 
     // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
     A.initilizeMatrix(false);
     B.initilizeMatrix(false);
     pi.initilizeMatrix(false);
     O.initilizeSequence(false);
-    double res = FORWARD(A, B, pi, O, pi.cols, O.observations);
-    cout << res << endl;
+    vector<int> viterbi_sequence = viterbi(A, B, pi, O, A.rows, O.observations);
+    string output = vector2string(viterbi_sequence);
+    cout << output << endl;
 
     return 0;
 }

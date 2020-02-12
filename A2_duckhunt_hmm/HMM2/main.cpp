@@ -59,7 +59,7 @@ void matrix::getMatrix(){
     for (int r = 0; r < vec[0]; r++) {
         vector<double> tmp;
         for (int c = 0; c < vec[1]; c++) {
-            int idx = 2 + c + r * vec[0];
+            int idx = 2 + c + r * vec[1];
             tmp.push_back( vec[idx]);
         }
         mat.push_back(tmp);  
@@ -205,7 +205,8 @@ vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
         } 
      
     }
-
+    delta.printMatrix();
+    delta_idx.printMatrix();
     // Termination step
     int bestPathPointer = 0; 
     double bestValue = 0; 
