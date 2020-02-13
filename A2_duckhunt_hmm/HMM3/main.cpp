@@ -7,6 +7,64 @@
 
 
 using namespace std;
+class matrix_3D{
+    public:
+    string name;
+    string input;
+    int rows;
+    int cols;
+    int depth;
+
+    vector<vector<vector<double>>> mat;
+
+
+    void empty_3D();
+    void initilizeMatrix_3D(bool verbose);
+    void printMatrix_3D();
+};
+
+void matrix_3D::initilizeMatrix_3D(bool verbose = false){
+    if (name.empty()){
+        fprintf(stderr, "INIT 3D: Fill in name properly. name empty: %i ", name.empty());
+        exit(1);
+    }
+    
+    empty_3D();
+    if (verbose){
+        printMatrix_3D();
+    }
+}
+
+void matrix_3D::empty_3D(){
+    if (depth == 0 || cols == 0 || rows == 0){
+        fprintf(stderr, "EMPTY 3D: Fill in rows and cols properly. depth: %i rows: %i cols: %i", depth, rows, cols);
+        exit(1);
+    }
+    for (int d = 0; d < depth; d ++){
+        vector<vector<double>> tmp_rows;
+        for (int r = 0; r < rows; r++) {
+            vector<double> tmp_cols;
+            for (int c = 0; c < cols; c++) {
+                tmp_cols.push_back(0.0);
+            }
+            tmp_rows.push_back(tmp_cols);  
+        }
+        mat.push_back(tmp_rows);
+    }
+}
+
+void matrix_3D::printMatrix_3D() {
+    cout << "size of " << name <<": (" << depth << "," << rows << "," << cols << ")"<<endl;
+    for (int d = 0; d < depth; d++){
+        cout << "DEPTH: " << d << endl;
+        for (int r = 0; r < rows; r++){
+            for (int c = 0; c < cols; c++){
+                cout << mat[d][r][c] << '	';
+            }
+            cout << endl;
+        }
+    }
+}
 
 class matrix{
     public:
@@ -21,13 +79,12 @@ class matrix{
     void getMatrix();
     void printMatrix();
     void initilizeMatrix(bool verbose, bool empty);
-    void printSequence();
     void emptyMatrix();
 };
 
 void matrix::initilizeMatrix(bool verbose = false, bool empty = false){
     if (name.empty() || (input.empty() && empty == false) ){
-        fprintf(stderr, "Fill in name and input properly. name empty: %i input: %i", name.empty(), input.empty());
+        fprintf(stderr, "INIT 2D: Fill in name and input properly. name empty: %i input: %i", name.empty(), input.empty());
         exit(1);
     }
     if (empty == true){
@@ -68,7 +125,7 @@ void matrix::getMatrix(){
 
 void matrix::emptyMatrix(){
     if (cols == 0 || rows == 0){
-        fprintf(stderr, "Fill in rows and cols properly. name rows: %i cols: %i", rows, cols);
+        fprintf(stderr, "EMPTY MATRIX:  Fill in rows and cols properly. rows: %i cols: %i", rows, cols);
         exit(1);
     }
     for (int r = 0; r < rows; r++) {
@@ -141,19 +198,19 @@ string vector2string(vector<int> vector_float){
     return value;
 }
 
-double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+matrix ALPHA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
-    matrix forward;
-    double forwardprob = 0;
+    matrix alpha;
+    double alpha_prob = 0;
     double tmp;
-    forward.name = "Forward Matrix";
-    forward.rows = N;
-    forward.cols = T;
-    forward.initilizeMatrix(false, true);
+    alpha.name = "ALPHA Matrix";
+    alpha.rows = N;
+    alpha.cols = T;
+    alpha.initilizeMatrix(false, true);
 
     // Initialization step
     for (int s = 0; s < N; s++) {
-        forward.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
+        alpha.mat[s][0] = ( pi.mat[0][s] * B.mat[s][O.vec[0]]);
     }
 
     // Recursion step
@@ -161,68 +218,96 @@ double FORWARD(matrix A, matrix B, matrix pi, sequence O, int N, int T){
         for (int s = 0; s < N; s++) {
             tmp = 0;
             for (int sp = 0; sp < N; sp++) {
-                tmp +=  forward.mat[sp][t] * A.mat[sp][s]; 
+                tmp +=  alpha.mat[sp][t] * A.mat[sp][s]; 
             }
-            forward.mat[s][t+1] = tmp * B.mat[s][O.vec[t+1]]; 
+            alpha.mat[s][t+1] = tmp * B.mat[s][O.vec[t+1]]; 
         }   
     }
-    forward.printMatrix();
-    // Termination step
-    for (int s = 0; s < N; s++) {
-                forwardprob +=  forward.mat[s][T-1]; 
-            }
-    return forwardprob;
+    // // Termination step
+    // for (int s = 0; s < N; s++) {
+    //             alpha_prob +=  alpha.mat[s][T-1]; 
+    //         }
+    return alpha;
 }
 
-vector<int> viterbi(matrix A, matrix B, matrix pi, sequence O, int N, int T){
-    vector<int> viterbi_sequence(T, 0);
+matrix BETA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
 
-    matrix delta;
-    matrix delta_idx;
-    delta.name = "delta matrix";
-    delta_idx.name = "delta matrix INDEX";
-    delta.rows = N; delta.cols = T;
-    delta_idx.rows = N; delta_idx.cols = T;
-    delta.initilizeMatrix(false, true);
-    delta_idx.initilizeMatrix(false, true);
-
-    // Initialization step
-    for (int s = 0; s < N; s++) {
-        delta.mat[s][0] = pi.mat[0][s] * B.mat[s][O.vec[0]];
-    } 
-
-    // Recursion step
-    for (int t = 1; t < T; t++) {
-        for (int i = 0; i < N; i++) {
-            vector<double> delta_tmp;
-            for (int j = 0; j < N; j++) {
-                delta_tmp.push_back( A.mat[j][i] * delta.mat[j][t-1] * B.mat[i][O.vec[t]] );
-            }
-     
-            delta.mat[i][t] = *max_element(delta_tmp.begin(), delta_tmp.end());
-            delta_idx.mat[i][t] = max_element(delta_tmp.begin(), delta_tmp.end()) - delta_tmp.begin();
-            
-        } 
-     
+    matrix beta; beta.name = "BETA matrix ";
+    beta.rows = N; 
+    beta.cols =T; 
+    beta.initilizeMatrix(false, true);
+    // INITIALIZATION:
+    for (int i = 0; i < N; i++) {
+        beta.mat[i][T-1] = 1;
     }
-    delta.printMatrix();
-    delta_idx.printMatrix();
-    // Termination step
-    int bestPathPointer = 0; 
-    double bestValue = 0; 
-    for (int s = 0; s < N; s++) {
-        if (delta.mat[s][T-1] > bestValue) {
-            bestPathPointer = s;
-            bestValue = delta.mat[s][T-1];
+    // RECURSION:
+    for (int t = T-1; t > 0; t--) {
+        for (int i = 0; i < N; i++) {
+            int sum = 0;
+            for (int j = 0; j < N; j++) {
+                sum += A.mat[i][j] * B.mat[j][O.vec[t]] * beta.mat[i][t];
+            }
+            beta.mat[i][t-1] = sum;
         }
     }
-    for (int t = T-1; t >= 0; t--) {
-            viterbi_sequence[t] = bestPathPointer;
-            bestPathPointer = delta_idx.mat[bestPathPointer][t];
-            }
 
-    return viterbi_sequence;
+    return beta;
 }
+
+struct gamma_zeta_output
+{
+    matrix_3D gamma;
+    matrix zeta;
+};
+
+
+gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+    matrix_3D gamma; gamma.name = "gamma 3D matrix";
+    gamma.depth = T; gamma.rows = N; gamma.cols = N;
+    gamma.initilizeMatrix_3D();
+
+    matrix zeta; zeta.name = "zeta matriz";
+    zeta.rows = N; zeta.cols = T; zeta.initilizeMatrix(false, true);
+    double sum;
+
+    sequence O_alpha; O_alpha.name = "O_(1:t)";
+    sequence O_beta; O_beta.name = "O_(t+1:T)";
+
+    matrix alpha;
+    matrix beta;
+    double alpha_prob;
+    alpha = ALPHA(A, B, pi, O, N, T);
+    for (int s = 0; s < N; s++) {
+        alpha_prob +=  alpha.mat[s][T-1]; 
+    }
+
+    for (int t = 1; t < T; t++) {
+        O_alpha.vec = vector<double> (&O.vec[0], &O.vec[t]); O_alpha.observations = t;
+        O_beta.vec = vector<double> (&O.vec[t], &O.vec[T]); O_beta.observations = T-t;
+        for (int i = 0; i < N; i++){
+            sum = 0;
+            for (int j = 0; j < N; j++){
+                alpha = ALPHA(A, B, pi, O_alpha, N, O_alpha.observations);
+                beta = BETA(A, B, pi, O_beta, N, O_beta.observations);
+                gamma.mat[t][i][j] = (alpha.mat[i][t] * A.mat[i][j] * B.mat[j][O.vec[t]] * beta.mat[j][t])/alpha_prob;
+                sum += gamma.mat[t][i][j];
+            }
+            zeta.mat[i][t] = sum;
+        }
+    }
+    gamma.printMatrix_3D();
+    zeta.printMatrix();
+    return {gamma, zeta};
+}
+
+void printVector(vector<int> A){   
+	for (int r = 0; r < A.size(); r++) {
+		cout << A[r] << '	';
+	}
+	cout << endl;
+	cout << " " << endl;
+}
+
 
 struct baum_welch_estimate
 {
@@ -239,21 +324,42 @@ baum_welch_estimate baum_welch(matrix A, matrix B, matrix pi, sequence O, int N,
      *      Calculate Gamma(alpha, beta)
      *      Caluclate Zeta(alpha, beta, B, A) 
      * M:
-     *      Calculate A(zeta)
-     *      Caluclate B(Gamma)
+     *      Calculate A(gamma, zeta)
+     *      Caluclate B(zeta)
      * RETURN: A, B
     */
+    double A_numerator;
+    double A_denominator;
+    double B_numerator;
+    double B_denominator;
 
-    matrix A_out;
-    matrix B_out;
-    
-    A_out.name = "Transition Matrix OUT (A_out)";
-    B_out.name = "Emission Matrix OUT (B_out)";
-    A_out.rows = A.rows; A_out.cols = A.cols; A_out.initilizeMatrix(true, true);
-    B_out.rows = B.rows; B_out.cols = B.cols; B_out.initilizeMatrix(true, true);
-    
+    // WHILE -> to convergence:
+    gamma_zeta_output gamma_N_zeta = GAMMA(A, B, pi, O, N, T);
 
-    return {A_out, B_out};
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++){
+            A_numerator = 0;
+            A_denominator = 0;
+            B_numerator = 0;
+            B_denominator = 0;
+            for (int t = 0; t < T; t++){
+                A_numerator +=  gamma_N_zeta.gamma.mat[t][i][j];
+                A_denominator += gamma_N_zeta.zeta.mat[t][i];
+
+                if (O.vec[t] == j){
+                    B_numerator += gamma_N_zeta.zeta.mat[t][i];
+                }
+                B_denominator += gamma_N_zeta.zeta.mat[t][i];
+            }
+            // cout << "A_numerator = "<< A_numerator << endl;
+            // cout << "A_denominator = "<< A_denominator << endl;
+            A.mat[i][j] = A_numerator/A_denominator;
+            B.mat[i][j] = B_numerator/B_denominator;
+        }
+    }
+
+
+    return {A, B};
 }
 
 
@@ -277,13 +383,16 @@ int main(){
     getline(cin, O.input);
 
     // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
-    A.initilizeMatrix(false);
-    B.initilizeMatrix(false);
-    pi.initilizeMatrix(false);
-    O.initilizeSequence(false);
+    A.initilizeMatrix(true);
+    B.initilizeMatrix(true);
+    pi.initilizeMatrix(true);
+    O.initilizeSequence(true);
+    cout << "Number of states: " << A.rows << endl;
+    cout << "Number of time steps: " << O.observations << endl;
     baum_welch_estimate tmp = baum_welch(A, B, pi, O, A.rows, O.observations);
     tmp.B.printMatrix();
     tmp.A.printMatrix();
+
 
 
     return 0;
