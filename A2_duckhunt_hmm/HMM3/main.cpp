@@ -239,7 +239,6 @@ struct gamma_zeta_output{
 struct baum_welch_output{
     matrix A;
     matrix B;
-    matrix pi;
 };
 
 
@@ -390,7 +389,7 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
         iters++;
     }
 
-    return {A, B, pi};
+    return {A, B};
 }
 
 
@@ -416,7 +415,7 @@ int main(){
     // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
     A.initilizeMatrix(false);
     B.initilizeMatrix(false);
-    pi.initilizeMatrix(false);
+    pi.initilizeMatrix(true);
     O.initilizeSequence(false);
 
     baum_welch_output newEstimate = BAUM_WELCH(A, B, pi, O, A.rows, O.observations);
