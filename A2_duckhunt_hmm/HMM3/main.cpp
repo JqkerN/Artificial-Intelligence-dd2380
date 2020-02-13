@@ -230,7 +230,7 @@ matrix ALPHA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
     return alpha;
 }
 
-matrix BETA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+matrix BETA(matrix A, matrix B, matrix pi, sequence O, int N, int T, int t_current){
 
     matrix beta; beta.name = "BETA matrix ";
     beta.rows = N; 
@@ -241,7 +241,7 @@ matrix BETA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
         beta.mat[i][T-1] = 1;
     }
     // RECURSION:
-    for (int t = T-1; t > 0; t--) {
+    for (int t = T-1; t >= t_current; t--) {
         for (int i = 0; i < N; i++) {
             int sum = 0;
             for (int j = 0; j < N; j++) {
@@ -277,9 +277,11 @@ gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T)
     matrix beta;
     double alpha_prob;
     alpha = ALPHA(A, B, pi, O, N, T);
+    alpha.printMatrix();
     for (int s = 0; s < N; s++) {
         alpha_prob +=  alpha.mat[s][T-1]; 
     }
+    cout << "FINAL ALPHA durududu durututudu: " << alpha_prob << endl;
 
     for (int t = 1; t < T; t++) {
         O_alpha.vec = vector<double> (&O.vec[0], &O.vec[t]); O_alpha.observations = t;
@@ -288,15 +290,15 @@ gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T)
             sum = 0;
             for (int j = 0; j < N; j++){
                 alpha = ALPHA(A, B, pi, O_alpha, N, O_alpha.observations);
-                beta = BETA(A, B, pi, O_beta, N, O_beta.observations);
+                beta = BETA(A, B, pi, O_beta, N, T, O_beta.observations);
                 gamma.mat[t][i][j] = (alpha.mat[i][t] * A.mat[i][j] * B.mat[j][O.vec[t]] * beta.mat[j][t])/alpha_prob;
                 sum += gamma.mat[t][i][j];
             }
             zeta.mat[i][t] = sum;
         }
     }
-    gamma.printMatrix_3D();
-    zeta.printMatrix();
+    // gamma.printMatrix_3D();
+    // zeta.printMatrix();
     return {gamma, zeta};
 }
 
@@ -335,28 +337,38 @@ baum_welch_estimate baum_welch(matrix A, matrix B, matrix pi, sequence O, int N,
 
     // WHILE -> to convergence:
     gamma_zeta_output gamma_N_zeta = GAMMA(A, B, pi, O, N, T);
-
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++){
             A_numerator = 0;
             A_denominator = 0;
-            B_numerator = 0;
-            B_denominator = 0;
-            for (int t = 0; t < T; t++){
+            for (int t = 1; t < T; t++){
                 A_numerator +=  gamma_N_zeta.gamma.mat[t][i][j];
-                A_denominator += gamma_N_zeta.zeta.mat[t][i];
+                A_denominator += gamma_N_zeta.zeta.mat[i][t];
 
-                if (O.vec[t] == j){
-                    B_numerator += gamma_N_zeta.zeta.mat[t][i];
-                }
-                B_denominator += gamma_N_zeta.zeta.mat[t][i];
             }
             // cout << "A_numerator = "<< A_numerator << endl;
             // cout << "A_denominator = "<< A_denominator << endl;
             A.mat[i][j] = A_numerator/A_denominator;
-            B.mat[i][j] = B_numerator/B_denominator;
         }
     }
+    cout << "A" << endl;
+
+    for (int i = 0; i < N; i++) {
+        for (int k = 0; k < B.cols; k++){
+            B_numerator = 0;
+            B_denominator = 0;
+            for (int t = 0; t < T; t++){
+                if (O.vec[t] == k){
+                    B_numerator += gamma_N_zeta.zeta.mat[i][t];
+                }
+                B_denominator += gamma_N_zeta.zeta.mat[i][t];
+            }
+            // cout << "B_numerator = "<< B_numerator << endl;
+            // cout << "B_denominator = "<< B_denominator << endl;
+            B.mat[i][k] = B_numerator/B_denominator;
+        }
+    }
+
 
 
     return {A, B};
@@ -383,10 +395,10 @@ int main(){
     getline(cin, O.input);
 
     // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
-    A.initilizeMatrix(true);
-    B.initilizeMatrix(true);
-    pi.initilizeMatrix(true);
-    O.initilizeSequence(true);
+    A.initilizeMatrix(false);
+    B.initilizeMatrix(false);
+    pi.initilizeMatrix(false);
+    O.initilizeSequence(false);
     cout << "Number of states: " << A.rows << endl;
     cout << "Number of time steps: " << O.observations << endl;
     baum_welch_estimate tmp = baum_welch(A, B, pi, O, A.rows, O.observations);
