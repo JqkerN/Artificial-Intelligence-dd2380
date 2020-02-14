@@ -242,7 +242,7 @@ struct baum_welch_output{
 };
 
 
-alpha_beta_output ALPHA_BETA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+alpha_beta_output ALPHA_BETA(const matrix& A, const matrix& B, const matrix& pi, const sequence& O, int N, int T){
     matrix alpha; alpha.name = "alpha matrix"; alpha.rows = N; alpha.cols = T; alpha.initilizeMatrix(false, true);
     matrix beta; beta.name = "beta matrix"; beta.rows = N; beta.cols = T; beta.initilizeMatrix(false, true);
     sequence C; C.name = "Scale Factors"; C.observations = T; C.initilizeSequence(false, true);
@@ -302,25 +302,20 @@ alpha_beta_output ALPHA_BETA(matrix A, matrix B, matrix pi, sequence O, int N, i
     return {alpha, beta, C};
 }
 
-gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T){
+gamma_zeta_output GAMMA(const matrix& A, const matrix& B, const matrix& pi, const sequence& O, int N, int T){
     matrix_3D gamma; gamma.name = "gamma 3D matrix"; gamma.depth = T; gamma.rows = N; gamma.cols = N; gamma.initilizeMatrix_3D(false);
     matrix zeta; zeta.name = "zeta matrix"; zeta.rows = N; zeta.cols = T ; zeta.initilizeMatrix(false, true);
+
     alpha_beta_output A_B_C = ALPHA_BETA(A, B, pi, O, N, T);
     matrix alpha = A_B_C.alpha;
     matrix beta = A_B_C.beta;
     sequence C = A_B_C.C;
-    
-    double alpha_norm = 0.0;
-    for (int k = 0; k < N; k++){
-        alpha_norm += alpha.mat[k][T-1];
-    }
-    cout << "ALPHA NORM : " << alpha_norm<< endl;
 
     // NOTE: Gamma
     for (int t = 0; t < T-1; t++ ){
         for (int i = 0; i < N; i++){
             for (int j = 0; j < N; j++){
-                gamma.mat[t][i][j] = alpha.mat[i][t] * A.mat[i][j] * B.mat[j][O.vec[t + 1]] * beta.mat[j][t+1];
+                gamma.mat[t][i][j] = alpha.mat[i][t] * A.mat[i][j] * B.mat[j][O.vec[t+1]] * beta.mat[j][t+1];
                 zeta.mat[i][t] += gamma.mat[t][i][j];
             }
         }
@@ -330,7 +325,6 @@ gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T)
     for (int i = 0; i < N; i++){
         zeta.mat[i][T-1] = alpha.mat[i][T-1];
     }
-    
     return {gamma, zeta, C};
 }
 
@@ -338,25 +332,27 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
     double denom;
     double numer;
 
-    int maxIters = 1000;
+    int maxIters = 300;
     int iters = 0;
-    double oldLogProb = numeric_limits<double>::min();
+    double oldLogProb = -numeric_limits<double>::max();
     double logProb = 0;
-
-    while (iters < maxIters && oldLogProb > logProb){
+    bool firstEntry = true;
+    while (iters < maxIters && oldLogProb < logProb){
+        if (firstEntry == true){
+            firstEntry = false;
+        }else{
+            oldLogProb = logProb;
+        }
+        
         gamma_zeta_output G_Z_C = GAMMA(A, B, pi, O, N, T);
         matrix_3D gamma = G_Z_C.gamma; 
         matrix zeta = G_Z_C.zeta; 
         sequence C = G_Z_C.C;
-        // C.printSequence();
-        zeta.printMatrix();
-
 
         // NOTE: Re-estimate pi
         for (int i = 0; i < N; i++){
             pi.mat[0][i] = zeta.mat[i][0];
         }
-        pi.printMatrix();
 
         // NOTE: Re-estimate A
         for (int i = 0; i < N; i++){
@@ -372,7 +368,6 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
                 A.mat[i][j] = numer/denom;
             }
         }
-        A.printMatrix();
         
         // NOTE: Re-estimate B
         for (int i = 0; i < N; i++){
@@ -390,7 +385,6 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
                 B.mat[i][j] = numer/denom;
             }
         }
-        B.printMatrix();
 
         // NOTE: Compute log(P(O|lambda))
         logProb = 0.0;
@@ -400,7 +394,6 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
         logProb = -logProb;
         iters++;
     }
-
     return {A, B};
 }
 
@@ -416,7 +409,7 @@ int main(){
     A.name = "Transition Matrix (A)";
     B.name = "Emission Matrix (B)";
     pi.name = "Inital State Probability Distribution (pi)";
-    O.name = "Sequence of Emissions (O)";
+    O.name = "Sequence of EmissionA, B, pis (O)";
 
     // Read input from terminal
     getline(cin, A.input); 
@@ -427,12 +420,12 @@ int main(){
     // Initilize matrixes and sequence with all attributes (OBS: can be done manuely)
     A.initilizeMatrix(false);
     B.initilizeMatrix(false);
-    pi.initilizeMatrix(true);
+    pi.initilizeMatrix(false);
     O.initilizeSequence(false);
 
     baum_welch_output newEstimate = BAUM_WELCH(A, B, pi, O, A.rows, O.observations);
-    newEstimate.A.KATTIS_OUTPUT();
-    newEstimate.B.KATTIS_OUTPUT();
+    newEstimate.A.printMatrix();
+    newEstimate.B.printMatrix();
     return 0;
 }
 
