@@ -276,11 +276,12 @@ alpha_beta_output ALPHA_BETA(matrix A, matrix B, matrix pi, sequence O, int N, i
         }
         // Scale alpha_t(i)
         C.vec[t] = 1/c;
-        for (int idx; idx < N; idx++){
-            alpha.mat[idx][t] *= C.vec[t];
+        for (int idx = 0; idx < N; idx++){
+            alpha.mat[idx][t] = alpha.mat[idx][t] * C.vec[t];
         }
     }
     
+
     // NOTE: beta - pass
     // Let B_(T-1)(i) = 1, scaled by C(T-1)
     for (int i = 0; i < N; i++){
@@ -308,6 +309,12 @@ gamma_zeta_output GAMMA(matrix A, matrix B, matrix pi, sequence O, int N, int T)
     matrix alpha = A_B_C.alpha;
     matrix beta = A_B_C.beta;
     sequence C = A_B_C.C;
+    
+    double alpha_norm = 0.0;
+    for (int k = 0; k < N; k++){
+        alpha_norm += alpha.mat[k][T-1];
+    }
+    cout << "ALPHA NORM : " << alpha_norm<< endl;
 
     // NOTE: Gamma
     for (int t = 0; t < T-1; t++ ){
@@ -331,7 +338,7 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
     double denom;
     double numer;
 
-    int maxIters = 10;
+    int maxIters = 1000;
     int iters = 0;
     double oldLogProb = numeric_limits<double>::min();
     double logProb = 0;
@@ -341,12 +348,15 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
         matrix_3D gamma = G_Z_C.gamma; 
         matrix zeta = G_Z_C.zeta; 
         sequence C = G_Z_C.C;
+        // C.printSequence();
+        zeta.printMatrix();
 
 
         // NOTE: Re-estimate pi
         for (int i = 0; i < N; i++){
             pi.mat[0][i] = zeta.mat[i][0];
         }
+        pi.printMatrix();
 
         // NOTE: Re-estimate A
         for (int i = 0; i < N; i++){
@@ -362,6 +372,7 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
                 A.mat[i][j] = numer/denom;
             }
         }
+        A.printMatrix();
         
         // NOTE: Re-estimate B
         for (int i = 0; i < N; i++){
@@ -379,6 +390,7 @@ baum_welch_output BAUM_WELCH(matrix A, matrix B, matrix pi, sequence O, int N, i
                 B.mat[i][j] = numer/denom;
             }
         }
+        B.printMatrix();
 
         // NOTE: Compute log(P(O|lambda))
         logProb = 0.0;
